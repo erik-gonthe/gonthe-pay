@@ -1,1 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Gonthe Pay" />
+  <meta name="theme-color" content="#ffffff" />
+  <title>Gonthe Pay</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <style>
+    :root {
+      --bg:#ffffff;--bg2:#f5f5f4;--bg3:#eeede9;--text:#1a1a18;--text2:#6b6b67;--text3:#a8a8a3;
+      --border:rgba(0,0,0,0.10);--border2:rgba(0,0,0,0.18);--blue:#1a6fbf;--blue-bg:#e8f0fa;
+      --green:#166534;--green-bg:#dcfce7;--red:#991b1b;--red-bg:#fee2e2;--radius:10px;--radius-lg:14px;
+    }
+    @media(prefers-color-scheme:dark){
+      :root{--bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;--text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+      --border:rgba(255,255,255,0.10);--border2:rgba(255,255,255,0.18);--blue:#5aa9f5;--blue-bg:#1a2a3d;
+      --green:#4ade80;--green-bg:#14271e;--red:#f87171;--red-bg:#2d1515;}
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:var(--bg);color:var(--text);font-size:16px}
+    input,select,textarea,button{font-family:inherit;font-size:15px;color:var(--text);background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 12px;outline:none}
+    input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+    button{cursor:pointer;background:transparent}
+    .auth-wrap{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;background:var(--bg)}
+    .auth-wrap .logo{font-size:48px;margin-bottom:1rem}
+    .auth-wrap h1{font-size:22px;font-weight:600;margin-bottom:4px}
+    .auth-wrap p{font-size:14px;color:var(--text2);margin-bottom:1.5rem;text-align:center}
+    .auth-box{width:100%;max-width:320px}
+    .field{margin-bottom:14px}
+    .field>label{display:block;font-size:13px;font-weight:500;margin-bottom:4px}
+    .field>.es{font-size:11px;font-weight:400;color:var(--text3);margin-left:4px}
+    .field input,.field select,.field textarea{width:100%}
+    .field textarea{height:60px;resize:none}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .err-msg{font-size:13px;color:var(--red);margin-bottom:10px;display:none}
+    .btn-primary{width:100%;padding:14px;font-size:15px;font-weight:600;background:var(--text);color:var(--bg);border:none;border-radius:var(--radius-lg);margin-top:4px}
+    .btn-primary:active{opacity:0.8}
+    .btn-secondary{width:100%;padding:12px;font-size:14px;font-weight:500;background:transparent;border:0.5px solid var(--border2);border-radius:var(--radius-lg);margin-top:8px;color:var(--text)}
+    .btn-green{width:100%;padding:12px;font-size:14px;font-weight:500;background:transparent;border:0.5px solid var(--green);border-radius:var(--radius-lg);margin-top:8px;color:var(--green)}
+    .btn-danger{color:var(--red);border-color:var(--red)}
+    .auth-note{font-size:12px;color:var(--text3);margin-top:1rem;text-align:center;max-width:280px}
+    #loading{min-height:100dvh;display:flex;align-items:center;justify-content:center}
+    .spinner{width:32px;height:32px;border:2px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    #app{display:none;max-width:500px;margin:0 auto;padding-bottom:80px}
+    .app-header{padding:16px 16px 12px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:0.5px solid var(--border)}
+    .app-header .title{font-size:20px;font-weight:600}
+    .app-header .subtitle{font-size:12px;color:var(--text2);margin-top:2px}
+    .user-pill{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg2);border-radius:20px;font-size:12px;color:var(--text2);border:none}
+    .admin-badge{font-size:10px;padding:1px 6px;background:var(--blue-bg);color:var(--blue);border-radius:10px;font-weight:500}
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;max-width:500px;margin:0 auto;background:var(--bg);border-top:0.5px solid var(--border);display:flex;z-index:100}
+    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 14px;font-size:10px;color:var(--text3);border:none;background:transparent;gap:3px}
+    .nav-item.active{color:var(--blue)}
+    .nav-item svg{width:22px;height:22px}
+    .tab-content{display:none;padding:16px}
+    .tab-content.active{display:block}
+    .chip-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+    .chip{padding:5px 12px;font-size:13px;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2)}
+    .chip.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue);font-weight:500}
+    .memo-box{background:var(--bg2);border:0.5px solid var(--border2);border-radius:var(--radius);padding:12px;margin-bottom:14px}
+    .memo-box .memo-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px}
+    .memo-box .memo-title{font-size:13px;font-weight:500}
+    .memo-box .memo-sub{font-size:11px;color:var(--text3);margin-top:2px}
+    .memo-text{font-size:13px;color:var(--text);line-height:1.5;word-break:break-all}
+    .copy-btn{font-size:11px;padding:3px 10px;border:0.5px solid var(--border2);border-radius:20px;color:var(--text2);white-space:nowrap}
+    .copy-btn.ok{color:var(--green);border-color:var(--green)}
+    .upload-box{border:0.5px dashed var(--border2);border-radius:var(--radius);padding:16px;text-align:center;background:var(--bg2);font-size:13px;color:var(--text2);margin-top:4px;cursor:pointer}
+    .upload-box .sub{font-size:11px;color:var(--text3);margin-top:2px}
+    .upload-box.has-img{border-style:solid}
+    #preview-img{width:100%;max-height:120px;object-fit:contain;border-radius:6px;margin-top:8px;display:none}
+    #file-input{display:none}
+    .card{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;margin-bottom:10px}
+    .card .card-top{display:flex;justify-content:space-between;align-items:flex-start}
+    .card .card-name{font-size:15px;font-weight:500}
+    .card .card-meta{font-size:12px;color:var(--text2);margin-top:3px}
+    .card .card-amount{font-size:16px;font-weight:600}
+    .card .card-actions{display:flex;gap:8px;margin-top:12px}
+    .card-btn{flex:1;padding:8px;font-size:13px;border:0.5px solid var(--border2);border-radius:var(--radius);background:transparent;color:var(--text)}
+    .card-btn.danger{color:var(--red);border-color:var(--red-bg)}
+    .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;background:var(--blue-bg);color:var(--blue);margin-left:6px}
+    .summary-bar{background:var(--bg2);border-radius:var(--radius);padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .sub-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+    .sub-tab{padding:6px 14px;font-size:13px;font-weight:500;border:0.5px solid var(--border2);border-radius:20px;background:transparent;color:var(--text2);white-space:nowrap}
+    .sub-tab.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue)}
+    .add-form{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-bottom:14px;border:0.5px solid var(--border)}
+    .add-form .af-title{font-size:14px;font-weight:500;margin-bottom:12px}
+    .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+    .stat-card{background:var(--bg2);border-radius:var(--radius);padding:12px}
+    .stat-card .sv{font-size:20px;font-weight:600}
+    .stat-card .sl{font-size:11px;color:var(--text2);margin-top:2px}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:flex-end;z-index:200}
+    .modal-overlay.show{display:flex}
+    .modal-sheet{background:var(--bg);border-radius:20px 20px 0 0;padding:20px 20px 40px;width:100%;max-width:500px;margin:0 auto;max-height:90dvh;overflow-y:auto}
+    .modal-handle{width:36px;height:4px;background:var(--bg3);border-radius:2px;margin:0 auto 16px}
+    .receipt-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:14px;gap:12px}
+    .receipt-row:last-of-type{border-bottom:none;font-weight:600;font-size:15px}
+    .receipt-row .rk{color:var(--text2);flex-shrink:0}
+    .receipt-img{width:100%;max-height:140px;object-fit:contain;border-radius:8px;margin:12px 0;border:0.5px solid var(--border)}
+    .wapp-btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;font-size:15px;font-weight:600;background:#25D366;color:white;border:none;border-radius:var(--radius-lg);margin-top:8px;cursor:pointer}
+    .empty{text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px}
+    .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;margin-right:4px}
+    .sync-dot.syncing{background:orange;animation:pulse 1s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .admin-only{display:none}
+    body.is-admin .admin-only{display:block}
+    body.is-admin .admin-flex{display:flex!important}
+  </style>
+</head>
+<body>
 
+<div id="loading"><div class="spinner"></div></div>
+
+<!-- Login -->
+<div id="auth-screen" class="auth-wrap" style="display:none">
+  <div class="logo">🚛</div>
+  <h1>Gonthe Pay</h1>
+  <p>Vendor payment tracker<br><span style="color:var(--text3)">Registro de pagos a proveedores</span></p>
+  <div class="auth-box">
+    <div class="field"><label>Email</label><input type="email" id="auth-email" placeholder="email@example.com" autocomplete="email" /></div>
+    <div class="field"><label>Password <span style="font-size:11px;color:var(--text3)">Contraseña</span></label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" /></div>
+    <div id="auth-error" class="err-msg"></div>
+    <button class="btn-primary" onclick="signInEmail()">Sign In · <span style="font-size:12px;font-weight:400">Iniciar sesión</span></button>
+    <button class="btn-secondary" onclick="showScreen('register-screen')">Create account / Crear cuenta</button>
+  </div>
+  <p class="auth-note">Only authorized accounts can access this app.<br>Solo cuentas autorizadas pueden acceder.</p>
+</div>
+
+<!-- Register -->
+<div id="register-screen" class="auth-wrap" style="display:none">
+  <div class="logo">🚛</div>
+  <h1 style="margin-bottom:4px">Create Account</h1>
+  <p>Crear cuenta · Gonthe Pay</p>
+  <div class="auth-box">
+    <div class="field"><label>Full name <span style="font-size:11px;color:var(--text3)">Nombre</span></label><input type="text" id="reg-name" placeholder="Juan García" /></div>
+    <div class="field"><label>Email</label><input type="email" id="reg-email" placeholder="email@example.com" /></div>
+    <div class="field"><label>Password <span style="font-size:11px;color:var(--text3)">Contraseña (mín. 6 caracteres)</span></label><input type="password" id="reg-password" placeholder="••••••••" /></div>
+    <div id="reg-error" class="err-msg"></div>
+    <button class="btn-primary" onclick="registerEmail()">Create Account</button>
+    <button class="btn-secondary" onclick="showScreen('auth-screen')">Back / Regresar</button>
+  </div>
+</div>
+
+<!-- Access Denied -->
+<div id="denied-screen" class="auth-wrap" style="display:none">
+  <div style="font-size:48px;margin-bottom:1rem">🔒</div>
+  <h2 style="margin-bottom:8px">Access denied</h2>
+  <p style="color:var(--text2);font-size:14px;margin-bottom:1.5rem;text-align:center">Your account is pending approval.<br>Tu cuenta está pendiente de aprobación.<br><br>Contact Erik to get access.</p>
+  <button class="btn-secondary" style="max-width:280px" onclick="auth.signOut()">Sign out / Cerrar sesión</button>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <div class="app-header">
+    <div>
+      <div class="title">Gonthe Pay 🚛</div>
+      <div class="subtitle"><span class="sync-dot" id="sync-dot"></span><span id="sync-status">Connected</span></div>
+    </div>
+    <button class="user-pill" onclick="showUserMenu()">
+      <span id="user-name-short">Me</span>
+      <span class="admin-badge admin-only">Admin</span>
+    </button>
+  </div>
+
+  <!-- NEW PAYMENT -->
+  <div class="tab-content active" id="tab-new">
+    <div class="field">
+      <label>Vendor <span style="font-size:11px;color:var(--text3)">Proveedor</span></label>
+      <div class="chip-wrap" id="chips-vendor"></div>
+      <input type="text" id="f-vendor" placeholder="Or type name / O escribe el nombre" style="margin-top:8px" oninput="buildMemo()" />
+    </div>
+    <div class="row2">
+      <div class="field"><label>Amount <span style="font-size:11px;color:var(--text3)">Monto</span></label><input type="number" id="f-amount" placeholder="0.00" inputmode="decimal" oninput="buildMemo()" /></div>
+      <div class="field"><label>Date <span style="font-size:11px;color:var(--text3)">Fecha</span></label><input type="date" id="f-date" onchange="buildMemo()" /></div>
+    </div>
+    <div class="field">
+      <label>Truck / Unit <span style="font-size:11px;color:var(--text3)">Camión</span></label>
+      <div class="chip-wrap" id="chips-truck"></div>
+      <input type="text" id="f-truck" placeholder="Or type plate / unit" style="margin-top:8px" oninput="buildMemo()" />
+    </div>
+    <div class="field">
+      <label>Repair Type <span style="font-size:11px;color:var(--text3)">Tipo de reparación</span></label>
+      <div class="chip-wrap" id="chips-repair"></div>
+      <input type="text" id="f-desc" placeholder="Or type description" style="margin-top:8px" oninput="buildMemo()" />
+    </div>
+    <div class="row2">
+      <div class="field"><label>Method <span style="font-size:11px;color:var(--text3)">Método</span></label>
+        <select id="f-method" onchange="buildMemo()"><option>Zelle</option><option>Cash</option><option>Check</option><option>Other</option></select>
+      </div>
+      <div class="field"><label>QB Category</label>
+        <select id="f-category" onchange="buildMemo()"><option>Repairs &amp; Maintenance</option><option>Tires &amp; Wheels</option><option>Fuel</option><option>Supplies</option><option>Other Expenses</option></select>
+      </div>
+    </div>
+    <div class="memo-box">
+      <div class="memo-header">
+        <div><div class="memo-title">QuickBooks Memo</div><div class="memo-sub">Copia y pega en el campo Memo de QuickBooks</div></div>
+        <button class="copy-btn" id="copy-memo-btn" onclick="copyMemo()">Copy</button>
+      </div>
+      <div class="memo-text" id="memo-output">Fill in the fields above...</div>
+    </div>
+    <div class="field">
+      <label>Zelle Screenshot <span style="font-size:11px;color:var(--text3)">Captura de Zelle</span></label>
+      <div class="upload-box" id="upload-box" onclick="document.getElementById('file-input').click()">
+        Tap to upload image<div class="sub">Toca para subir imagen</div>
+        <img id="preview-img" src="" alt="" />
+      </div>
+      <input type="file" id="file-input" accept="image/*" onchange="handleImg(this)" />
+    </div>
+    <button class="btn-primary" onclick="savePayment()">Register Payment · <span style="font-size:13px;font-weight:400">Registrar pago</span></button>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="tab-content" id="tab-history">
+    <div class="summary-bar">
+      <div style="font-size:13px;font-weight:500">Total Paid <span style="font-size:11px;font-weight:400;color:var(--text3)">Total pagado</span></div>
+      <div style="font-size:18px;font-weight:600" id="history-total">$0.00</div>
+    </div>
+    <div id="payments-list"><div class="empty">No payments yet.<br>Sin pagos registrados.</div></div>
+  </div>
+
+  <!-- CATALOG -->
+  <div class="tab-content" id="tab-catalog">
+    <div class="sub-tabs">
+      <button class="sub-tab active" onclick="showSubTab('trucks',this)">Trucks</button>
+      <button class="sub-tab" onclick="showSubTab('repairs',this)">Repairs</button>
+      <button class="sub-tab" onclick="showSubTab('vendors',this)">Vendors</button>
+    </div>
+    <div id="cat-trucks">
+      <div class="add-form admin-only">
+        <div class="af-title">Add Truck <span style="font-size:11px;font-weight:400;color:var(--text3)">Agregar camión</span></div>
+        <div class="row2">
+          <div class="field"><label>Name</label><input type="text" id="t-name" placeholder="Unit 1" /></div>
+          <div class="field"><label>Plate <span style="font-size:11px;color:var(--text3)">Placas</span></label><input type="text" id="t-plate" placeholder="ABC-1234" /></div>
+        </div>
+        <div class="field"><label>Description</label><input type="text" id="t-desc" placeholder="Peterbilt 389, Cummins" /></div>
+        <button class="btn-secondary" onclick="addTruck()">+ Add Truck</button>
+      </div>
+      <div id="list-trucks"></div>
+    </div>
+    <div id="cat-repairs" style="display:none">
+      <div class="add-form admin-only">
+        <div class="af-title">Add Repair Type <span style="font-size:11px;font-weight:400;color:var(--text3)">Agregar reparación</span></div>
+        <div class="field"><label>Name</label><input type="text" id="r-name" placeholder="Brake repair" /></div>
+        <div class="field"><label>QB Category</label><select id="r-cat"><option>Repairs &amp; Maintenance</option><option>Tires &amp; Wheels</option><option>Fuel</option><option>Supplies</option><option>Other Expenses</option></select></div>
+        <button class="btn-secondary" onclick="addRepair()">+ Add Repair</button>
+      </div>
+      <div id="list-repairs"></div>
+    </div>
+    <div id="cat-vendors" style="display:none">
+      <div class="add-form admin-only">
+        <div class="af-title">Add Vendor <span style="font-size:11px;font-weight:400;color:var(--text3)">Agregar proveedor</span></div>
+        <div class="row2">
+          <div class="field"><label>Name</label><input type="text" id="v-name" placeholder="Juan Mecánico" /></div>
+          <div class="field"><label>Trade <span style="font-size:11px;color:var(--text3)">Oficio</span></label><input type="text" id="v-trade" placeholder="Mechanic" /></div>
+        </div>
+        <div class="field"><label>Phone <span style="font-size:11px;color:var(--text3)">Teléfono</span></label><input type="tel" id="v-phone" placeholder="(432) 555-0000" /></div>
+        <button class="btn-secondary" onclick="addVendor()">+ Add Vendor</button>
+      </div>
+      <div id="list-vendors"></div>
+    </div>
+  </div>
+
+  <!-- EXPORT -->
+  <div class="tab-content admin-only" id="tab-export">
+    <div class="stat-grid" id="export-stats"></div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Export to Excel</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px">Formato para QuickBooks y tu CPA</div>
+      <div class="field"><label>Year</label><select id="exp-year"><option value="all">All years</option><option value="2025">2025</option><option value="2026">2026</option></select></div>
+      <div class="field"><label>QB Category</label><select id="exp-cat"><option value="all">All categories</option><option>Repairs &amp; Maintenance</option><option>Tires &amp; Wheels</option><option>Fuel</option><option>Supplies</option><option>Other Expenses</option></select></div>
+      <button class="btn-green" onclick="exportCSV()">Download CSV for Excel</button>
+      <button class="btn-secondary" onclick="exportQB()">Download QuickBooks Import Format</button>
+    </div>
+    <div class="card">
+      <div style="font-size:15px;font-weight:500;margin-bottom:4px">Manage Users <span style="font-size:11px;font-weight:400;color:var(--text3)">Gestionar usuarios</span></div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px">Approve or remove access</div>
+      <div id="users-list"></div>
+      <div class="add-form" style="margin-top:12px">
+        <div class="af-title">Approve new user <span style="font-size:11px;font-weight:400;color:var(--text3)">Autorizar usuario</span></div>
+        <div class="field"><label>Email</label><input type="email" id="new-user-email" placeholder="email@example.com" /></div>
+        <div class="field"><label>Role</label><select id="new-user-role"><option value="employee">Employee</option><option value="admin">Admin</option></select></div>
+        <button class="btn-secondary" onclick="addUser()">+ Authorize</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav" id="bottom-nav" style="display:none">
+  <button class="nav-item active" onclick="switchTab('new',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span>New<br><span style="font-size:9px">Nuevo</span></span>
+  </button>
+  <button class="nav-item" onclick="switchTab('history',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    <span>History<br><span style="font-size:9px">Historial</span></span>
+  </button>
+  <button class="nav-item" onclick="switchTab('catalog',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+    <span>Catalog<br><span style="font-size:9px">Catálogo</span></span>
+  </button>
+  <button class="nav-item admin-only admin-flex" style="display:none" onclick="switchTab('export',this)">
+    <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+    <span>Export<br><span style="font-size:9px">Exportar</span></span>
+  </button>
+</nav>
+
+<!-- Receipt Modal -->
+<div class="modal-overlay" id="receipt-modal" onclick="closeReceipt(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="text-align:center;margin-bottom:14px">
+      <div style="font-size:17px;font-weight:600">Gonthe Transportation LLC</div>
+      <div style="font-size:12px;color:var(--text2)">EIN: 93-2723739 · Odessa / Midland, TX</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:3px" id="rcpt-num"></div>
+    </div>
+    <div id="rcpt-rows"></div>
+    <img id="rcpt-img" class="receipt-img" src="" style="display:none" alt="" />
+    <div style="font-size:11px;color:var(--text3);text-align:center;margin:12px 0">Internal payment record · Comprobante interno</div>
+    <button class="btn-secondary" onclick="downloadReceipt()">Download Receipt</button>
+    <button class="wapp-btn" onclick="sendWhatsApp()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Send via WhatsApp
+    </button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyAOhVi1BAUy8HmCTcrukTKGB-BzM7C9uYY",
+  authDomain: "payments-beb2d.firebaseapp.com",
+  projectId: "payments-beb2d",
+  storageBucket: "payments-beb2d.firebasestorage.app",
+  messagingSenderId: "693728622332",
+  appId: "1:693728622332:web:0018b7d40e1f199bab0979"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser=null,isAdmin=false,currentReceipt=null;
+let selTruck=null,selRepair=null,selVendor=null,imgDataUrl=null;
+let trucks=[],repairs=[],vendors=[],payments=[],users=[];
+let unsubPayments=null;
+
+function showScreen(id) {
+  ['auth-screen','register-screen','denied-screen'].forEach(s=>{
+    const el=document.getElementById(s);
+    if(el) el.style.display = s===id ? 'flex' : 'none';
+  });
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';}
+function hideErr(id){const el=document.getElementById(id);el.style.display='none';}
+
+async function signInEmail() {
+  const email=document.getElementById('auth-email').value.trim();
+  const pass=document.getElementById('auth-password').value;
+  if(!email||!pass){showErr('auth-error','Please enter email and password.');return;}
+  hideErr('auth-error');
+  try { await auth.signInWithEmailAndPassword(email,pass); }
+  catch(e) { showErr('auth-error', e.code==='auth/invalid-credential'?'Invalid email or password. / Email o contraseña incorrectos.':e.message); }
+}
+
+async function registerEmail() {
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-password').value;
+  if(!name||!email||!pass){showErr('reg-error','Please fill all fields.');return;}
+  if(pass.length<6){showErr('reg-error','Password must be at least 6 characters.');return;}
+  hideErr('reg-error');
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(email,pass);
+    await cred.user.updateProfile({displayName:name});
+  } catch(e) {
+    showErr('reg-error', e.code==='auth/email-already-in-use'?'This email is already registered.':e.message);
+  }
+}
+
+function showUserMenu() {
+  if(confirm(`Signed in as: ${currentUser.email}\n\nSign out? / ¿Cerrar sesión?`)){
+    if(unsubPayments) unsubPayments();
+    auth.signOut();
+  }
+}
+
+auth.onAuthStateChanged(async user => {
+  document.getElementById('loading').style.display='none';
+  if(!user){
+    showScreen('auth-screen');
+    document.getElementById('app').style.display='none';
+    document.getElementById('bottom-nav').style.display='none';
+    return;
+  }
+  const userDoc = await db.collection('users').doc(user.uid).get();
+  if(!userDoc.exists){
+    const usersSnap = await db.collection('users').get();
+    if(usersSnap.empty){
+      await db.collection('users').doc(user.uid).set({
+        email:user.email,name:user.displayName||user.email,role:'admin',
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+      initApp(user,'admin');
+    } else {
+      document.getElementById('app').style.display='none';
+      document.getElementById('bottom-nav').style.display='none';
+      showScreen('denied-screen');
+    }
+    return;
+  }
+  initApp(user, userDoc.data().role);
+});
+
+async function initApp(user,role){
+  currentUser=user; isAdmin=role==='admin';
+  if(isAdmin) document.body.classList.add('is-admin');
+  document.getElementById('user-name-short').textContent=user.displayName?.split(' ')[0]||user.email.split('@')[0];
+  ['auth-screen','register-screen','denied-screen'].forEach(s=>{
+    const el=document.getElementById(s); if(el) el.style.display='none';
+  });
+  document.getElementById('app').style.display='block';
+  document.getElementById('bottom-nav').style.display='flex';
+  await loadCatalog();
+  subscribePayments();
+  if(isAdmin) loadUsers();
+  setDefaultDate(); renderChips();
+}
+
+async function loadCatalog(){
+  const[ts,rs,vs]=await Promise.all([
+    db.collection('catalog').doc('trucks').collection('items').orderBy('createdAt').get(),
+    db.collection('catalog').doc('repairs').collection('items').orderBy('createdAt').get(),
+    db.collection('catalog').doc('vendors').collection('items').orderBy('createdAt').get()
+  ]);
+  trucks=ts.docs.map(d=>({id:d.id,...d.data()}));
+  repairs=rs.docs.map(d=>({id:d.id,...d.data()}));
+  vendors=vs.docs.map(d=>({id:d.id,...d.data()}));
+  if(trucks.length===0&&isAdmin){
+    const defs=[{name:'Unit 1',plate:'',desc:''},{name:'Unit 2',plate:'',desc:''},{name:'Unit 3',plate:'',desc:''}];
+    for(const t of defs) await db.collection('catalog').doc('trucks').collection('items').add({...t,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const f=await db.collection('catalog').doc('trucks').collection('items').orderBy('createdAt').get();
+    trucks=f.docs.map(d=>({id:d.id,...d.data()}));
+  }
+  if(repairs.length===0&&isAdmin){
+    const defs=[{name:'Tire change',cat:'Tires & Wheels'},{name:'Brakes',cat:'Repairs & Maintenance'},{name:'Oil change',cat:'Repairs & Maintenance'},{name:'Engine repair',cat:'Repairs & Maintenance'},{name:'Suspension',cat:'Repairs & Maintenance'},{name:'Electrical',cat:'Repairs & Maintenance'}];
+    for(const r of defs) await db.collection('catalog').doc('repairs').collection('items').add({...r,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const f=await db.collection('catalog').doc('repairs').collection('items').orderBy('createdAt').get();
+    repairs=f.docs.map(d=>({id:d.id,...d.data()}));
+  }
+  renderChips(); renderCatalog();
+}
+
+function subscribePayments(){
+  setSyncState('syncing');
+  let q=db.collection('payments').orderBy('createdAt','desc');
+  if(!isAdmin) q=q.where('createdBy','==',currentUser.uid);
+  unsubPayments=q.onSnapshot(snap=>{
+    payments=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderPayments(); renderExportStats(); setSyncState('ok');
+  },()=>setSyncState('error'));
+}
+
+async function savePayment(){
+  const vendor=document.getElementById('f-vendor').value.trim();
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const date=document.getElementById('f-date').value;
+  if(!vendor||!amount||!date){alert('Please fill in vendor, amount, and date.\nCompleta proveedor, monto y fecha.');return;}
+  const btn=document.querySelector('#tab-new .btn-primary');
+  btn.disabled=true;btn.textContent='Saving...';setSyncState('syncing');
+  const imageUrl=imgDataUrl||'';
+  const countDoc=await db.collection('meta').doc('counter').get();
+  const num=(countDoc.exists?countDoc.data().count:0)+1;
+  await db.collection('meta').doc('counter').set({count:num});
+  await db.collection('payments').add({
+    vendor,amount,date,
+    desc:document.getElementById('f-desc').value.trim(),
+    truck:document.getElementById('f-truck').value.trim(),
+    method:document.getElementById('f-method').value,
+    category:document.getElementById('f-category').value,
+    memo:document.getElementById('memo-output').textContent,
+    imageUrl,
+    receiptNum:'RCP-'+String(num).padStart(4,'0'),
+    createdBy:currentUser.uid,
+    createdByName:currentUser.displayName||currentUser.email,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  btn.disabled=false;
+  btn.innerHTML='Register Payment · <span style="font-size:13px;font-weight:400">Registrar pago</span>';
+  clearForm(); switchTabById('history');
+}
+
+async function deletePayment(id){
+  if(!confirm('Delete this payment?\n¿Eliminar este pago?'))return;
+  await db.collection('payments').doc(id).delete();
+}
+
+async function loadUsers(){
+  const snap=await db.collection('users').orderBy('createdAt').get();
+  users=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderUsers();
+}
+
+async function addUser(){
+  const email=document.getElementById('new-user-email').value.trim();
+  const role=document.getElementById('new-user-role').value;
+  if(!email)return;
+  await db.collection('authorized_emails').doc(email.toLowerCase()).set({role,authorizedBy:currentUser.uid,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('new-user-email').value='';
+  alert(`Access authorized for: ${email}\nAcceso autorizado para: ${email}\n\nAsk them to create an account at:\nhttps://gonthe-pay.netlify.app`);
+}
+
+async function removeUser(uid){
+  if(!confirm('Remove this user\'s access?'))return;
+  await db.collection('users').doc(uid).delete();
+  loadUsers();
+}
+
+async function addTruck(){
+  const name=document.getElementById('t-name').value.trim();if(!name)return;
+  await db.collection('catalog').doc('trucks').collection('items').add({name,plate:document.getElementById('t-plate').value.trim(),desc:document.getElementById('t-desc').value.trim(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  ['t-name','t-plate','t-desc'].forEach(id=>document.getElementById(id).value='');
+  await loadCatalog();
+}
+async function addRepair(){
+  const name=document.getElementById('r-name').value.trim();if(!name)return;
+  await db.collection('catalog').doc('repairs').collection('items').add({name,cat:document.getElementById('r-cat').value,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('r-name').value='';await loadCatalog();
+}
+async function addVendor(){
+  const name=document.getElementById('v-name').value.trim();if(!name)return;
+  await db.collection('catalog').doc('vendors').collection('items').add({name,trade:document.getElementById('v-trade').value.trim(),phone:document.getElementById('v-phone').value.trim(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  ['v-name','v-trade','v-phone'].forEach(id=>document.getElementById(id).value='');await loadCatalog();
+}
+async function deleteCatalogItem(col,id){
+  if(!confirm('Delete this item?'))return;
+  await db.collection('catalog').doc(col).collection('items').doc(id).delete();
+  await loadCatalog();
+}
+
+function renderChips(){
+  document.getElementById('chips-truck').innerHTML=trucks.map(t=>`<button class="chip${selTruck===t.id?' active':''}" onclick="selectTruck('${t.id}')">${t.name}${t.plate?' ('+t.plate+')':''}</button>`).join('');
+  document.getElementById('chips-repair').innerHTML=repairs.map(r=>`<button class="chip${selRepair===r.id?' active':''}" onclick="selectRepair('${r.id}')">${r.name}</button>`).join('');
+  document.getElementById('chips-vendor').innerHTML=vendors.map(v=>`<button class="chip${selVendor===v.id?' active':''}" onclick="selectVendorChip('${v.id}')">${v.name}${v.trade?' · '+v.trade:''}</button>`).join('');
+}
+function selectTruck(id){selTruck=selTruck===id?null:id;const t=trucks.find(x=>x.id===id);document.getElementById('f-truck').value=(t&&selTruck)?t.name+(t.plate?' / '+t.plate:''):'';renderChips();buildMemo();}
+function selectRepair(id){selRepair=selRepair===id?null:id;const r=repairs.find(x=>x.id===id);if(r&&selRepair){document.getElementById('f-desc').value=r.name;document.getElementById('f-category').value=r.cat;}else document.getElementById('f-desc').value='';renderChips();buildMemo();}
+function selectVendorChip(id){selVendor=selVendor===id?null:id;const v=vendors.find(x=>x.id===id);document.getElementById('f-vendor').value=(v&&selVendor)?v.name:'';renderChips();buildMemo();}
+
+function renderPayments(){
+  const el=document.getElementById('payments-list');
+  if(!payments.length){el.innerHTML='<div class="empty">No payments yet.<br>Sin pagos registrados.</div>';return;}
+  const total=payments.reduce((s,p)=>s+(p.amount||0),0);
+  document.getElementById('history-total').textContent='$'+total.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  el.innerHTML=payments.map(p=>{
+    const d=p.date?new Date(p.date+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}):'—';
+    const canDelete=isAdmin||p.createdBy===currentUser?.uid;
+    return `<div class="card"><div class="card-top"><div><div class="card-name">${p.vendor||'—'}<span class="badge">${p.method||'Zelle'}</span></div><div class="card-meta">${d} · ${p.truck||'—'}</div><div class="card-meta" style="margin-top:2px">${p.desc?p.desc.substring(0,50)+(p.desc.length>50?'...':''):'—'}</div>${isAdmin?`<div class="card-meta" style="margin-top:2px;font-size:11px">By: ${p.createdByName||'—'}</div>`:''}</div><div class="card-amount">$${(p.amount||0).toFixed(2)}</div></div><div class="card-actions"><button class="card-btn" onclick="showReceipt('${p.id}')">View Receipt</button>${canDelete?`<button class="card-btn danger" onclick="deletePayment('${p.id}')">Delete</button>`:''}</div></div>`;
+  }).join('');
+}
+
+function renderCatalog(){
+  const ce=isAdmin;
+  document.getElementById('list-trucks').innerHTML=trucks.length?trucks.map(t=>`<div class="card"><div class="card-top"><div><div class="card-name">${t.name}${t.plate?' — '+t.plate:''}</div><div class="card-meta">${t.desc||'No description'}</div></div>${ce?`<button class="card-btn danger" style="max-width:70px;padding:6px 8px" onclick="deleteCatalogItem('trucks','${t.id}')">Delete</button>`:''}</div></div>`).join(''):'<div class="empty">No trucks registered.</div>';
+  document.getElementById('list-repairs').innerHTML=repairs.length?repairs.map(r=>`<div class="card"><div class="card-top"><div><div class="card-name">${r.name}</div><div class="card-meta">${r.cat}</div></div>${ce?`<button class="card-btn danger" style="max-width:70px;padding:6px 8px" onclick="deleteCatalogItem('repairs','${r.id}')">Delete</button>`:''}</div></div>`).join(''):'<div class="empty">No repair types registered.</div>';
+  document.getElementById('list-vendors').innerHTML=vendors.length?vendors.map(v=>`<div class="card"><div class="card-top"><div><div class="card-name">${v.name}${v.trade?' · <span style="font-weight:400;color:var(--text2)">'+v.trade+'</span>':''}</div><div class="card-meta">${v.phone||'No phone'}</div></div><div style="display:flex;gap:8px;align-items:center">${v.phone?`<a href="https://wa.me/1${v.phone.replace(/\D/g,'')}" style="font-size:13px;color:var(--blue);text-decoration:none">WhatsApp</a>`:''} ${ce?`<button class="card-btn danger" style="max-width:70px;padding:6px 8px" onclick="deleteCatalogItem('vendors','${v.id}')">Delete</button>`:''}</div></div></div>`).join(''):'<div class="empty">No vendors registered.</div>';
+}
+
+function renderUsers(){
+  document.getElementById('users-list').innerHTML=users.map(u=>`<div class="card" style="margin-bottom:8px"><div class="card-top"><div><div class="card-name">${u.name||u.email}</div><div class="card-meta">${u.email} · <span style="color:var(--blue)">${u.role||'employee'}</span></div></div>${u.id!==currentUser?.uid?`<button class="card-btn danger" style="max-width:70px;padding:6px 8px" onclick="removeUser('${u.id}')">Remove</button>`:'<span class="badge">You</span>'}</div></div>`).join('');
+}
+
+function renderExportStats(){
+  const total=payments.reduce((s,p)=>s+(p.amount||0),0);
+  const yr=new Date().getFullYear().toString();
+  const ytd=payments.filter(p=>p.date?.startsWith(yr)).reduce((s,p)=>s+(p.amount||0),0);
+  const el=document.getElementById('export-stats');
+  if(el) el.innerHTML=`<div class="stat-card"><div class="sv">${payments.length}</div><div class="sl">Total payments</div></div><div class="stat-card"><div class="sv">$${ytd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</div><div class="sl">${yr} total</div></div>`;
+}
+
+function buildMemo(){
+  const vendor=document.getElementById('f-vendor').value.trim();
+  const date=document.getElementById('f-date').value;
+  const truck=document.getElementById('f-truck').value.trim();
+  const desc=document.getElementById('f-desc').value.trim();
+  const method=document.getElementById('f-method').value;
+  if(!vendor&&!desc){document.getElementById('memo-output').textContent='Fill in the fields above...';return;}
+  const parts=[];
+  if(desc)parts.push(desc);if(truck)parts.push(truck);if(vendor)parts.push('Vendor: '+vendor);if(method)parts.push(method);
+  if(date)parts.push(new Date(date+'T12:00:00').toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'}));
+  document.getElementById('memo-output').textContent=parts.join(' | ');
+  document.getElementById('copy-memo-btn').textContent='Copy';document.getElementById('copy-memo-btn').classList.remove('ok');
+}
+
+function copyMemo(){
+  const text=document.getElementById('memo-output').textContent;
+  if(text.includes('Fill in'))return;
+  navigator.clipboard.writeText(text).then(()=>{const btn=document.getElementById('copy-memo-btn');btn.textContent='Copied!';btn.classList.add('ok');setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('ok');},2000);});
+}
+
+function handleImg(input){
+  const file=input.files[0];if(!file)return;
+  const canvas=document.createElement('canvas');const img=new Image();const url=URL.createObjectURL(file);
+  img.onload=()=>{const maxW=800,maxH=600;let w=img.width,h=img.height;if(w>maxW){h=h*maxW/w;w=maxW;}if(h>maxH){w=w*maxH/h;h=maxH;}canvas.width=w;canvas.height=h;canvas.getContext('2d').drawImage(img,0,0,w,h);imgDataUrl=canvas.toDataURL('image/jpeg',0.7);document.getElementById('preview-img').src=imgDataUrl;document.getElementById('preview-img').style.display='block';document.getElementById('upload-box').classList.add('has-img');URL.revokeObjectURL(url);};
+  img.src=url;
+}
+
+function showReceipt(id){
+  const p=payments.find(x=>x.id===id);if(!p)return;currentReceipt=p;
+  const d=p.date?new Date(p.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}):'—';
+  document.getElementById('rcpt-num').textContent=p.receiptNum||'';
+  const rows=[['Vendor',p.vendor||'—'],['Date',d],['Truck',p.truck||'—'],['Method',p.method||'—'],['QB Category',p.category||'—'],['Description',p.desc||'—'],['QB Memo',p.memo||'—'],['By',p.createdByName||'—'],['Total Paid','$'+(p.amount||0).toFixed(2)]];
+  document.getElementById('rcpt-rows').innerHTML=rows.map(r=>`<div class="receipt-row"><span class="rk">${r[0]}</span><span style="text-align:right">${r[1]}</span></div>`).join('');
+  const imgEl=document.getElementById('rcpt-img');
+  if(p.imageUrl){imgEl.src=p.imageUrl;imgEl.style.display='block';}else imgEl.style.display='none';
+  document.getElementById('receipt-modal').classList.add('show');
+}
+
+function closeReceipt(e){if(e.target===document.getElementById('receipt-modal'))document.getElementById('receipt-modal').classList.remove('show');}
+
+function downloadReceipt(){
+  if(!currentReceipt)return;const p=currentReceipt;
+  const d=p.date?new Date(p.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}):'—';
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${p.receiptNum}</title><style>body{font-family:Arial,sans-serif;max-width:480px;margin:40px auto;padding:20px;color:#222}.hdr{text-align:center;margin-bottom:20px}.co{font-size:17px;font-weight:700}.sub{font-size:12px;color:#666}table{width:100%;border-collapse:collapse;font-size:13px}td{padding:8px 4px;border-bottom:1px solid #eee}td:last-child{text-align:right}tr:last-child td{font-weight:700;border-bottom:none}.memo{background:#f5f5f5;padding:8px;border-radius:4px;font-size:12px;color:#555;margin:8px 0}.footer{font-size:11px;color:#aaa;text-align:center;margin-top:16px;border-top:1px solid #eee;padding-top:10px}</style></head><body><div class="hdr"><div class="co">Gonthe Transportation LLC</div><div class="sub">EIN: 93-2723739 | Odessa / Midland, TX</div><div style="font-size:11px;color:#999;margin-top:4px">${p.receiptNum}</div></div>${p.imageUrl?`<img src="${p.imageUrl}" style="max-width:100%;max-height:160px;object-fit:contain;margin:10px 0;border:1px solid #eee;border-radius:6px" />`:''}<table><tr><td style="color:#666">Vendor</td><td>${p.vendor||'—'}</td></tr><tr><td style="color:#666">Date</td><td>${d}</td></tr><tr><td style="color:#666">Truck</td><td>${p.truck||'—'}</td></tr><tr><td style="color:#666">Method</td><td>${p.method||'—'}</td></tr><tr><td style="color:#666">QB Category</td><td>${p.category||'—'}</td></tr><tr><td style="color:#666">Description</td><td>${p.desc||'—'}</td></tr><tr><td>Total Paid</td><td>$${(p.amount||0).toFixed(2)}</td></tr></table><div class="memo"><strong>QuickBooks Memo:</strong> ${p.memo||'—'}</div><div class="footer">Internal payment record · Gonthe Transportation LLC</div></body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(p.receiptNum||'receipt')+'.html';a.click();
+}
+
+function sendWhatsApp(){
+  if(!currentReceipt)return;const p=currentReceipt;
+  const d=p.date?new Date(p.date+'T12:00:00').toLocaleDateString('en-US',{month:'long',day:'2-digit',year:'numeric'}):'—';
+  const msg=encodeURIComponent(`Payment confirmation — Gonthe Transportation LLC\n$${(p.amount||0).toFixed(2)} via ${p.method||'Zelle'} — ${d}\nWork: ${p.desc||'—'}\nTruck: ${p.truck||'—'}\nReceipt: ${p.receiptNum||'—'}`);
+  window.open('https://wa.me/?text='+msg,'_blank');
+}
+
+function getFilteredPayments(){
+  const yr=document.getElementById('exp-year').value;const cat=document.getElementById('exp-cat').value;
+  return payments.filter(p=>{if(yr!=='all'&&!(p.date||'').startsWith(yr))return false;if(cat!=='all'&&p.category!==cat)return false;return true;});
+}
+
+function exportCSV(){
+  const data=getFilteredPayments();if(!data.length){alert('No payments match this filter.');return;}
+  const headers=['Receipt #','Date','Vendor','Amount','Method','QB Category','Truck','Description','QB Memo','Recorded By'];
+  const rows=data.map(p=>[p.receiptNum||'',p.date||'',p.vendor||'',(p.amount||0).toFixed(2),p.method||'',p.category||'',p.truck||'',p.desc||'',p.memo||'',p.createdByName||'']);
+  const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  download(csv,`Gonthe_Payments_${document.getElementById('exp-year').value}.csv`,'text/csv');
+}
+
+function exportQB(){
+  const data=getFilteredPayments();if(!data.length){alert('No payments match this filter.');return;}
+  const headers=['Date','Description','Amount','Account','Memo','Name'];
+  const rows=data.map(p=>[p.date||'',p.desc||p.category||'',(p.amount||0).toFixed(2),p.category||'',p.memo||'',p.vendor||'']);
+  const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  download(csv,'Gonthe_QB_Import.csv','text/csv');
+}
+
+function download(content,filename,type){const blob=new Blob([content],{type});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;a.click();}
+
+function switchTab(name,btn){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');btn.classList.add('active');
+  document.getElementById('receipt-modal').classList.remove('show');
+}
+function switchTabById(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const idx={new:0,history:1,catalog:2,export:3};
+  const items=document.querySelectorAll('.nav-item');if(items[idx[name]])items[idx[name]].classList.add('active');
+}
+function showSubTab(name,btn){
+  document.querySelectorAll('.sub-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  ['trucks','repairs','vendors'].forEach(id=>document.getElementById('cat-'+id).style.display='none');
+  document.getElementById('cat-'+name).style.display='block';
+}
+function setSyncState(state){
+  const dot=document.getElementById('sync-dot');const txt=document.getElementById('sync-status');
+  if(state==='syncing'){dot.classList.add('syncing');txt.textContent='Syncing...';}
+  else if(state==='ok'){dot.classList.remove('syncing');txt.textContent='Live sync';}
+  else{dot.style.background='var(--red)';txt.textContent='Offline';}
+}
+function clearForm(){
+  ['f-vendor','f-amount','f-desc','f-truck'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-method').value='Zelle';document.getElementById('f-category').value='Repairs & Maintenance';
+  document.getElementById('preview-img').style.display='none';document.getElementById('upload-box').classList.remove('has-img');
+  imgDataUrl=null;selTruck=null;selRepair=null;selVendor=null;setDefaultDate();renderChips();
+  document.getElementById('memo-output').textContent='Fill in the fields above...';
+}
+function setDefaultDate(){const el=document.getElementById('f-date');if(el)el.value=new Date().toISOString().split('T')[0];}
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+</script>
+</body>
+</html>
